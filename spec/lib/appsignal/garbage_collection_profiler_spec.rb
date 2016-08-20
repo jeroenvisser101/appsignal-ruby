@@ -1,8 +1,23 @@
 require 'spec_helper'
 
+class FakeGCProfiler
+  attr_writer :total_time
+
+  def total_time
+    @total_time ||= 0
+  end
+
+  def clear
+    @total_time = 0
+  end
+end
+
 describe Appsignal::GarbageCollectionProfiler do
   before do
-    GC::Profiler.stub(:total_time) { 0 }
+    @internal_profiler = FakeGCProfiler.new
+    Appsignal::GarbageCollectionProfiler.any_instance.stub(:internal_profiler) do
+      @internal_profiler
+    end
   end
 
   it "should have a total time of 0" do
@@ -11,7 +26,7 @@ describe Appsignal::GarbageCollectionProfiler do
 
   describe "after a GC run" do
     before do
-      GC::Profiler.stub(:total_time) { 0.12345 }
+      @internal_profiler.total_time = 0.12345
       @profiler = Appsignal::GarbageCollectionProfiler.new
     end
 
@@ -20,20 +35,21 @@ describe Appsignal::GarbageCollectionProfiler do
     end
 
     it "should clear Ruby's GC::Profiler" do
-      expect(GC::Profiler).to receive(:clear)
+      expect(@internal_profiler).to receive(:clear)
       @profiler.total_time
     end
   end
 
   describe "after multiple GC runs" do
-    before do
-      GC::Profiler.stub(:total_time) { 0.12345 }
-      @profiler = Appsignal::GarbageCollectionProfiler.new
-      @profiler.total_time
-    end
-
     it "should add all times from Ruby's GC::Profiler together" do
-      expect(@profiler.total_time).to eq(246)
+      profiler = Appsignal::GarbageCollectionProfiler.new
+
+      2.times do
+        @internal_profiler.total_time = 0.12345
+        profiler.total_time
+      end
+
+      expect(profiler.total_time).to eq(246)
     end
   end
 end

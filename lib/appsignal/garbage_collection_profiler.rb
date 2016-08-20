@@ -5,9 +5,15 @@ module Appsignal
     end
 
     def total_time
-      @total_time += (GC::Profiler.total_time * 1000).round
-      GC::Profiler.clear
+      @total_time += (internal_profiler.total_time * 1000).round
+      internal_profiler.clear
       @total_time
+    end
+
+    private
+
+    def internal_profiler
+      GC::Profiler
     end
   end
 end
