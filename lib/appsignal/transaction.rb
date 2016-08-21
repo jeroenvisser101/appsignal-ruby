@@ -182,6 +182,7 @@ module Appsignal
     end
 
     def finish_event(name, title, body, body_format=Appsignal::EventFormatter::DEFAULT)
+      @ext.add_gc_time(Appsignal::GarbageCollectionProfiler.new.total_time)
       @ext.finish_event(
         name,
         title || BLANK,
