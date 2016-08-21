@@ -2,13 +2,21 @@ require 'spec_helper'
 
 class FakeGCProfiler
   attr_writer :total_time
+  attr_writer :clear_delay
 
   def total_time
     @total_time ||= 0
   end
 
   def clear
+    sleep clear_delay
     @total_time = 0
+  end
+
+  private
+
+  def clear_delay
+    @clear_delay ||= 0
   end
 end
 
@@ -50,6 +58,24 @@ describe Appsignal::GarbageCollectionProfiler do
       end
 
       expect(profiler.total_time).to eq(246)
+    end
+  end
+
+  describe "in multiple threads, with a slow GC::Profiler" do
+    it "should not count garbage collection times twice" do
+      threads, results = [], []
+      @internal_profiler.clear_delay = 0.001
+      @internal_profiler.total_time = 0.12345
+
+      2.times do
+        threads << Thread.new do
+          profiler = Appsignal::GarbageCollectionProfiler.new
+          results << profiler.total_time
+        end
+      end
+
+      threads.each(&:join)
+      expect(results).to eq([123, 0])
     end
   end
 end
