@@ -1,9 +1,9 @@
 class FakeGCProfiler
-  attr_writer :total_time
+  attr_accessor :total_time
   attr_writer :clear_delay
 
-  def total_time
-    @total_time ||= 0
+  def initialize(total_time = 0)
+    @total_time = total_time
   end
 
   def clear

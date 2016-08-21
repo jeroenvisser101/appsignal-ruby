@@ -481,11 +481,9 @@ describe Appsignal::Transaction do
       end
 
       it "should add garbage collection time" do
-        internal_profiler = FakeGCProfiler.new
-        internal_profiler.total_time = 0.12345
-
         allow_any_instance_of(Appsignal::GarbageCollectionProfiler)
-          .to receive(:internal_profiler).and_return(internal_profiler)
+          .to receive(:internal_profiler)
+          .and_return(FakeGCProfiler.new(0.12345))
 
         transaction.ext.should_receive(:add_gc_time).with(123)
         transaction.finish_event('name', nil, nil, nil)
