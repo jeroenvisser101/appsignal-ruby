@@ -15,9 +15,9 @@ end
 describe Appsignal::GarbageCollectionProfiler do
   before do
     @internal_profiler = FakeGCProfiler.new
-    Appsignal::GarbageCollectionProfiler.any_instance.stub(:internal_profiler) do
-      @internal_profiler
-    end
+    allow_any_instance_of(Appsignal::GarbageCollectionProfiler)
+      .to receive(:internal_profiler)
+      .and_return(@internal_profiler)
   end
 
   it "should have a total time of 0" do
